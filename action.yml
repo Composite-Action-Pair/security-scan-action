@@ -26,6 +26,14 @@ runs:
           --format json --output-file eslint-report.json || true
       shell: bash
 
+    - name: Install Syft (SBOM Generator)
+      run: curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+      shell: bash
+
+    - name: Generate SBOM (CycloneDX format)
+      run: syft . -o cyclonedx-json=sbom.json
+      shell: bash
+
     - name: Upload reports as Artifact
       uses: actions/upload-artifact@v4
       with:
@@ -33,3 +41,4 @@ runs:
         path: |
           npm-audit-report.json
           eslint-report.json
+          sbom.json
