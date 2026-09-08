@@ -1,5 +1,5 @@
 name: 'Security Scan Suite'
-description: 'Runs static analysis, dependency scanning, and SBOM generation for Node.js projects'
+description: 'Runs static analysis, dependency scanning, SBOM generation, and DAST for Node.js projects'
 
 runs:
   using: "composite"
@@ -34,6 +34,22 @@ runs:
       run: syft . -o cyclonedx-json=sbom.json
       shell: bash
 
+    - name: Start application in background
+      run: |
+        npm start &
+        sleep 5
+      shell: bash
+
+    - name: Run OWASP ZAP Baseline Scan (DAST)
+      run: |
+        docker run --rm --network host \
+          -v $(pwd):/zap/wrk/:rw \
+          zaproxy/zap-stable zap-baseline.py \
+          -t http://localhost:3000 \
+          -J zap-report.json \
+          -r zap-report.html || true
+      shell: bash
+
     - name: Upload reports as Artifact
       uses: actions/upload-artifact@v4
       with:
@@ -42,3 +58,5 @@ runs:
           npm-audit-report.json
           eslint-report.json
           sbom.json
+          zap-report.json
+          zap-report.html
